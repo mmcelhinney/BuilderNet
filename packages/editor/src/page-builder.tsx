@@ -53,7 +53,9 @@ const defaultCarouselImages = [
 
 const defaultConfigByType: Record<string, Record<string, unknown>> = {
   hero: { title: "Welcome", subtitle: "Add your message here", overlay: true },
-  text: { content: "Add your text here.", alignment: "left" },
+  background: { backgroundImage: "", overlayOpacity: 0.3, minHeight: "100vh" },
+  logo: { imageUrl: "", alt: "Logo", linkUrl: "", size: "medium", alignment: "left" },
+  text: { content: "Add your text here.", alignment: "left", fontSize: "medium", fontFamily: "" },
   textImage: { content: "", imageUrl: "", layout: "left" },
   richText: { html: "<p>Rich content here.</p>" },
   accordion: { title: "FAQ", items: [] },
@@ -82,6 +84,11 @@ export function PageBuilder({
   showHistory = true,
   showSettings = true,
 }: PageBuilderProps) {
+  const [isMounted, setIsMounted] = React.useState(false);
+  React.useEffect(() => {
+    setIsMounted(true);
+  }, []);
+
   const { blocks, setBlocks, undo, redo, canUndo, canRedo } = useEditorHistory(initialBlocks);
   const [activeId, setActiveId] = React.useState<string | null>(null);
   const [selectedId, setSelectedId] = React.useState<string | null>(null);
@@ -170,6 +177,52 @@ export function PageBuilder({
     [blocks, setBlocks]
   );
 
+  // Defer DndContext until after mount to avoid hydration mismatch (dnd-kit generates
+  // different aria-describedby IDs on server vs client).
+  if (!isMounted) {
+    return (
+      <div className={cn("flex gap-6 h-full", className)}>
+        {showPalette && (
+          <aside className="w-56 shrink-0 border-r border-slate-200 bg-slate-50/50 p-4 overflow-auto">
+            <div className="text-sm text-slate-500">Loading blocks…</div>
+          </aside>
+        )}
+        <div className="flex-1 min-w-0 flex flex-col">
+          {showHistory && (
+            <div className="flex items-center gap-2 mb-4">
+              <button type="button" disabled className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm opacity-50">
+                Undo
+              </button>
+              <button type="button" disabled className="rounded-lg border border-slate-200 px-3 py-1.5 text-sm opacity-50">
+                Redo
+              </button>
+            </div>
+          )}
+          <div className="flex flex-wrap gap-4 items-start rounded-xl border-2 border-dashed border-slate-200 bg-white p-6 min-h-[400px]">
+            {blocks.length === 0 ? (
+              <div className="text-center py-16 text-slate-500 w-full">Drag blocks here to build your page</div>
+            ) : (
+              blocks.map((block) => {
+                const C = blockComponents[block.type];
+                if (!C) return null;
+                return (
+                  <div key={block.id} className="rounded-lg border border-slate-200 bg-white p-4">
+                    <C block={block} theme={theme} isEditor />
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+        {showSettings && (
+          <aside className="w-72 shrink-0 border-l border-slate-200 bg-slate-50/50 overflow-auto">
+            <div className="p-4 text-sm text-slate-500">Select a block to edit its settings</div>
+          </aside>
+        )}
+      </div>
+    );
+  }
+
   return (
     <DndContext
       sensors={sensors}
@@ -205,7 +258,7 @@ export function PageBuilder({
             </div>
           )}
           <SortableContext items={blocks.map((b) => b.id)} strategy={verticalListSortingStrategy}>
-            <CanvasDropZone className="space-y-6 rounded-xl border-2 border-dashed border-slate-200 bg-white p-6 min-h-[400px]">
+            <CanvasDropZone className="flex flex-wrap gap-4 items-start rounded-xl border-2 border-dashed border-slate-200 bg-white p-6 min-h-[400px]">
               {blocks.length === 0 && (
                 <div className="text-center py-16 text-slate-500">
                   Drag blocks here to build your page

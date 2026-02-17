@@ -4,6 +4,8 @@
 
 export type BlockType =
   | "hero"
+  | "background"
+  | "logo"
   | "text"
   | "textImage"
   | "richText"

@@ -1,7 +1,7 @@
 import { notFound } from "next/navigation";
 import { prisma } from "@buildernet/database";
-import { blockComponents } from "@buildernet/blocks";
 import type { PageBlock } from "@buildernet/utils";
+import { BlockRenderer } from "@/components/block-renderer";
 
 export default async function PublicSitePage({
   params,
@@ -28,11 +28,7 @@ export default async function PublicSitePage({
 
   return (
     <div className="min-h-screen bg-white text-slate-900">
-      {blocks.map((block) => {
-        const Component = blockComponents[block.type];
-        if (!Component) return null;
-        return <Component key={block.id} block={block} theme={themeConfig} isEditor={false} />;
-      })}
+      <BlockRenderer blocks={blocks} theme={themeConfig} />
     </div>
   );
 }

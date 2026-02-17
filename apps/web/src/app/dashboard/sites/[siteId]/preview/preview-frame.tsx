@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { blockComponents } from "@buildernet/blocks";
 import type { PageBlock } from "@buildernet/utils";
+import { BlockRenderer } from "@/components/block-renderer";
 
 const PREVIEW_KEY_PREFIX = "buildernet_preview_";
 
@@ -22,7 +22,7 @@ export function PreviewFrame({ siteId, theme }: PreviewFrameProps) {
   React.useEffect(() => {
     if (!mounted) return;
     try {
-      const raw = sessionStorage.getItem(`${PREVIEW_KEY_PREFIX}${siteId}`);
+      const raw = localStorage.getItem(`${PREVIEW_KEY_PREFIX}${siteId}`);
       if (raw) {
         const { blocks: parsed } = JSON.parse(raw) as { blocks?: PageBlock[] };
         setBlocks(Array.isArray(parsed) ? parsed : null);
@@ -61,20 +61,7 @@ export function PreviewFrame({ siteId, theme }: PreviewFrameProps) {
 
   return (
     <div className="min-h-full bg-white">
-      <div className="max-w-4xl mx-auto">
-        {blocks.map((block) => {
-          const Component = blockComponents[block.type];
-          if (!Component) return null;
-          return (
-            <Component
-              key={block.id}
-              block={block}
-              theme={theme}
-              isEditor={false}
-            />
-          );
-        })}
-      </div>
+      <BlockRenderer blocks={blocks} theme={theme} />
     </div>
   );
 }

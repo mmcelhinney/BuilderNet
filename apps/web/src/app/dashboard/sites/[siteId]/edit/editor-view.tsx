@@ -35,7 +35,7 @@ export function EditorView({ siteId, pageId, initialBlocks }: EditorViewProps) {
   const openPreview = useCallback(() => {
     const key = `buildernet_preview_${siteId}`;
     try {
-      sessionStorage.setItem(key, JSON.stringify({ blocks }));
+      localStorage.setItem(key, JSON.stringify({ blocks }));
     } catch {
       // ignore
     }

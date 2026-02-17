@@ -6,6 +6,8 @@ import { cn } from "@buildernet/ui";
 
 const BLOCK_TYPES = [
   { type: "hero", label: "Hero", icon: "🖼️" },
+  { type: "background", label: "Background", icon: "🖼️" },
+  { type: "logo", label: "Logo", icon: "◇" },
   { type: "text", label: "Text", icon: "📝" },
   { type: "textImage", label: "Text + Image", icon: "📄" },
   { type: "richText", label: "Rich Text", icon: "📃" },

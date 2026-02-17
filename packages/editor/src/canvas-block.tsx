@@ -35,9 +35,24 @@ export function CanvasBlock({
     isDragging,
   } = useSortable({ id: block.id });
 
-  const style = {
+  const config = block.config || {};
+  const rawWidth = (config.width as string) || "100%";
+  const widthMap: Record<string, string> = {
+    full: "100%",
+    half: "50%",
+    third: "33.333%",
+    quarter: "25%",
+  };
+  const width = widthMap[rawWidth] ?? rawWidth;
+  const height = (config.height as string) || undefined;
+
+  const style: React.CSSProperties = {
     transform: CSS.Transform.toString(transform),
     transition,
+    width,
+    minWidth: 0,
+    flexShrink: 0,
+    ...(height && height !== "auto" ? { minHeight: height } : {}),
   };
 
   return (
@@ -45,7 +60,7 @@ export function CanvasBlock({
       ref={setNodeRef}
       style={style}
       className={cn(
-        "group relative rounded-lg transition-shadow",
+        "group relative rounded-lg transition-shadow flex-shrink-0",
         selected && "ring-2 ring-slate-400 ring-offset-2",
         isDragging && "opacity-50 z-50"
       )}
@@ -74,7 +89,7 @@ export function CanvasBlock({
           </button>
         </div>
       )}
-      <div onClick={onSelect}>
+      <div onClick={onSelect} className="h-full">
         <BlockRender block={block} theme={theme} isEditor />
       </div>
     </div>

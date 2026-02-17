@@ -6,6 +6,8 @@
 import type { ComponentType } from "react";
 import type { PageBlock } from "@buildernet/utils";
 export { HeroBlock } from "./hero";
+export { BackgroundBlock } from "./background";
+export { LogoBlock } from "./logo";
 export { TextBlock } from "./text";
 export { TextImageBlock } from "./text-image";
 export { RichTextBlock } from "./rich-text";
@@ -18,6 +20,8 @@ export type { HeroBlockConfig } from "./hero";
 export type { BlockWrapperProps } from "./block-wrapper";
 
 import { HeroBlock } from "./hero";
+import { BackgroundBlock } from "./background";
+import { LogoBlock } from "./logo";
 import { TextBlock } from "./text";
 import { TextImageBlock } from "./text-image";
 import { RichTextBlock } from "./rich-text";
@@ -35,6 +39,8 @@ export type BlockComponentProps = {
 
 export const blockComponents: Record<string, ComponentType<BlockComponentProps>> = {
   hero: HeroBlock,
+  background: BackgroundBlock,
+  logo: LogoBlock,
   text: TextBlock,
   textImage: TextImageBlock,
   richText: RichTextBlock,

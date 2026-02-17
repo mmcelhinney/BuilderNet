@@ -20,6 +20,8 @@ export function TextBlock({
     italic?: boolean;
     underline?: boolean;
     color?: string;
+    fontSize?: "small" | "medium" | "large";
+    fontFamily?: string;
   };
   const content = config.content ?? "";
   const alignment = config.alignment ?? "left";
@@ -27,6 +29,10 @@ export function TextBlock({
   const italic = config.italic ?? false;
   const underline = config.underline ?? false;
   const color = config.color ?? undefined;
+  const fontSize = config.fontSize ?? "medium";
+  const fontFamily = config.fontFamily ?? undefined;
+
+  const sizeMap = { small: "0.875rem", medium: "1rem", large: "1.25rem" };
 
   const style: React.CSSProperties = {
     textAlign: alignment,
@@ -34,6 +40,8 @@ export function TextBlock({
     fontStyle: italic ? "italic" : undefined,
     textDecoration: underline ? "underline" : undefined,
     color: color || undefined,
+    fontSize: sizeMap[fontSize],
+    fontFamily: fontFamily || undefined,
   };
 
   return (
