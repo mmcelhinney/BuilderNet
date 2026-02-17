@@ -1,0 +1,217 @@
+// BuilderNet - Production-ready Website Builder
+// Database schema: PostgreSQL (abstracted via Prisma ORM)
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// User & Auth
+// ---------------------------------------------------------------------------
+model User {
+  id            String    @id @default(cuid())
+  email         String    @unique
+  name          String?
+  passwordHash  String?   // null if OAuth-only
+  image         String?
+  emailVerified DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  sites         Site[]
+  subscriptions Subscription[]
+}
+
+// ---------------------------------------------------------------------------
+// Multi-tenant: Site
+// ---------------------------------------------------------------------------
+model Site {
+  id          String   @id @default(cuid())
+  name        String
+  slug        String   @unique // subdomain or path: my-site.buildernet.app
+  domain      String?  // custom domain
+  userId      String
+  themeId     String?
+  headerId    String?
+  footerId    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  user    User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  theme   Theme?  @relation(fields: [themeId], references: [id])
+  header  Block?  @relation("SiteHeader", fields: [headerId], references: [id])
+  footer  Block?  @relation("SiteFooter", fields: [footerId], references: [id])
+  blocks  Block[]
+  pages   Page[]
+  media   Media[]
+  forms   Form[]
+  backups Backup[]
+  blockFormSubmissions BlockFormSubmission[]
+
+  @@index([userId])
+  @@index([slug])
+}
+
+// ---------------------------------------------------------------------------
+// Pages & Blocks (JSON-driven layout)
+// ---------------------------------------------------------------------------
+model Page {
+  id          String   @id @default(cuid())
+  siteId      String
+  title       String
+  slug        String   // URL path: /about, /contact
+  blocks      Json     @default("[]") // Array of block configs
+  seo         Json?    // { title, description, ogImage, schema }
+  published   Boolean  @default(false)
+  sortOrder   Int      @default(0)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@unique([siteId, slug])
+  @@index([siteId])
+}
+
+// ---------------------------------------------------------------------------
+// Block (reusable component definition; layout stored in Page.blocks)
+// ---------------------------------------------------------------------------
+model Block {
+  id        String   @id @default(cuid())
+  type      String   // header, footer, hero, text, form, etc.
+  name      String?
+  config    Json     @default("{}")
+  siteId    String?  // null for global blocks
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  site       Site?   @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  siteHeader Site[]  @relation("SiteHeader")
+  siteFooter Site[]  @relation("SiteFooter")
+}
+
+// ---------------------------------------------------------------------------
+// Theme (global styles)
+// ---------------------------------------------------------------------------
+model Theme {
+  id        String   @id @default(cuid())
+  name      String   @default("Default")
+  config    Json     // colors, typography, spacing, radius, shadows
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  sites Site[]
+}
+
+// ---------------------------------------------------------------------------
+// Media Library
+// ---------------------------------------------------------------------------
+model Media {
+  id        String   @id @default(cuid())
+  siteId    String
+  key       String   // S3/key path
+  url       String   // public URL
+  alt       String?
+  width     Int?
+  height    Int?
+  mimeType  String
+  size      Int      // bytes
+  folder    String?  // folder path for organisation
+  createdAt DateTime @default(now())
+
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@index([siteId])
+  @@index([siteId, folder])
+}
+
+// ---------------------------------------------------------------------------
+// Forms & Submissions
+// ---------------------------------------------------------------------------
+model Form {
+  id           String   @id @default(cuid())
+  siteId       String
+  name         String
+  fields       Json     // [{ type, name, label, required, options }]
+  submitLabel  String   @default("Submit")
+  successMsg   String?
+  notifyEmail  String?
+  spamProtection Boolean @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+
+  site        Site             @relation(fields: [siteId], references: [id], onDelete: Cascade)
+  submissions FormSubmission[]
+}
+
+model FormSubmission {
+  id        String   @id @default(cuid())
+  formId    String
+  data      Json     // { fieldName: value }
+  ip        String?
+  userAgent String?
+  createdAt DateTime @default(now())
+
+  form Form @relation(fields: [formId], references: [id], onDelete: Cascade)
+
+  @@index([formId])
+}
+
+// Inline form block submissions (contact, review, general enquiry templates)
+model BlockFormSubmission {
+  id           String   @id @default(cuid())
+  siteId       String
+  blockId      String
+  formTemplate String   // contact | review | general_enquiry
+  data         Json
+  ip           String?
+  userAgent    String?
+  createdAt    DateTime @default(now())
+
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@index([siteId])
+  @@index([siteId, blockId])
+}
+
+// ---------------------------------------------------------------------------
+// Subscription & Billing (Stripe)
+// ---------------------------------------------------------------------------
+model Subscription {
+  id                   String    @id @default(cuid())
+  userId               String
+  stripeCustomerId     String?
+  stripeSubscriptionId String?   @unique
+  stripePriceId        String?
+  status               String    // trialing, active, past_due, canceled
+  trialEndsAt          DateTime?
+  currentPeriodEnd     DateTime?
+  planId               String?   // free, starter, pro, enterprise
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([stripeSubscriptionId])
+}
+
+// ---------------------------------------------------------------------------
+// Backup (snapshot for restore)
+// ---------------------------------------------------------------------------
+model Backup {
+  id        String   @id @default(cuid())
+  siteId    String
+  name      String?
+  snapshot  Json     // full site + pages + theme snapshot
+  createdAt DateTime @default(now())
+
+  site Site @relation(fields: [siteId], references: [id], onDelete: Cascade)
+
+  @@index([siteId])
+}

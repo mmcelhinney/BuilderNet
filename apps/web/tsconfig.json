@@ -1,0 +1,22 @@
+{
+  "extends": "../../tsconfig.base.json",
+  "compilerOptions": {
+    "plugins": [{ "name": "next" }],
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "jsx": "preserve",
+    "noEmit": true,
+    "incremental": true,
+    "baseUrl": ".",
+    "paths": {
+      "@/*": ["./src/*"],
+      "@buildernet/ui": ["../../packages/ui/src"],
+      "@buildernet/blocks": ["../../packages/blocks/src"],
+      "@buildernet/editor": ["../../packages/editor/src"],
+      "@buildernet/utils": ["../../packages/utils/src"],
+      "@buildernet/database": ["../../packages/database/src"]
+    }
+  },
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+  "exclude": ["node_modules"]
+}

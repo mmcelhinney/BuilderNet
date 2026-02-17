@@ -1,0 +1,32 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    container_name: buildernet-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: buildernet
+      POSTGRES_PASSWORD: buildernet
+      POSTGRES_DB: buildernet
+    ports:
+      - "5432:5432"
+    volumes:
+      - buildernet_pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U buildernet -d buildernet"]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+
+  adminer:
+    image: adminer:4
+    container_name: buildernet-adminer
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  buildernet_pgdata:
+
